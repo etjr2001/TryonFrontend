@@ -8,17 +8,52 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var viewModel: ViewModel
+    
+    enum ActiveSheet: Identifiable {
+        case basicForm
+        case advancedForm
+        
+        var id: Int {
+            hashValue
+        }
+    }
+    
+    @State private var activeSheet: ActiveSheet?
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Button("Generate basic try-on") {
+                activeSheet = .basicForm
+            }
+            .buttonStyle(.borderedProminent)
+            .padding()
+            Button("Generate with advanced options") {
+                activeSheet = .advancedForm
+            }
+            .buttonStyle(.borderedProminent)
+            .padding()
         }
-        .padding()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .basicForm:
+                BasicFormView()
+                    .environmentObject(viewModel)
+            case .advancedForm:
+                AdvancedFormView()
+                    .environmentObject(viewModel)
+            }
+        }
+        .task {
+            await viewModel.fetchWorkflows()
+            await viewModel.fetchSampleImages()
+        }
     }
 }
 
 #Preview {
+    let mockVM = ViewModel()
+    
     ContentView()
+        .environmentObject(mockVM)
 }
