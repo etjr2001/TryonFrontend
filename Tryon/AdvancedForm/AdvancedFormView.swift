@@ -10,23 +10,26 @@ import SwiftUI
 struct AdvancedFormView: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var sheetCancelled: Bool
+    
     private let pages: [WorkflowEditPage] = [
-        .uploadImage(imageType: .human),
+        .uploadHumanImage,
         .generateMask,
         .generatePose,
-        .uploadImage(imageType: .garment),
+        .uploadGarmentImage,
         .idmVton,
     ]
     
     var body: some View {
-        WorkflowNavigationView(pages: pages) {
-            await runDefaultWorkflow()
-        }
+        WorkflowNavigationView(pages: pages,
+                               runWorkflow: {
+            try await viewModel.generateMaskAndUpdateImage()
+            try await viewModel.generatePoseAndUpdateImage()
+            try await viewModel.runPipelineAndUpdateImage()
+        },
+                               sheetCancelled: $sheetCancelled
+        )
         .environmentObject(viewModel)
     }
     
-    private func runDefaultWorkflow() async {
-        
-    }
-
 }

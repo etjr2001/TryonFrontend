@@ -48,15 +48,20 @@ class ViewModel: ObservableObject {
     }
     
     func resetAllParameters() {
+        resetSAMPrompt()
         resetMaskParameters()
         resetPoseParameters()
+        resetGarmentDescription()
         resetPipelineParameters()
+    }
+    
+    func resetSAMPrompt() {
+        updateSAMPrompt(to: "shirt")
     }
     
     func resetMaskParameters() {
         updateSAMModel(to: "sam_hq_vit_h (2.57GB)")
         updateDINOModel(to: "GroundingDINO_SwinB (938MB)")
-        updateSAMPrompt(to: "shirt")
         updateSAMThreshold(to: 0.3)
     }
     
@@ -66,9 +71,12 @@ class ViewModel: ObservableObject {
         updateDensePoseResolution(to: 768)
     }
     
+    func resetGarmentDescription() {
+        updateGarmentDescription(to: "shirt")
+    }
+    
     func resetPipelineParameters() {
         updateWeightDType(to: "float16")
-        updateGarmentDescription(to: "shirt")
         updateNegativePrompt(to: "monochrome, lowres, bad anatomy, worst quality, low quality")
         updateWidthResolution(to: 768)
         updateHeightResolution(to: 1024)
@@ -401,6 +409,20 @@ class ViewModel: ObservableObject {
         updateImageUUIDForAllWorkflows(nodeMetaTitle: nodeMetaTitle, uuid: uuid)
     }
     
+    func runPipelineAndUpdateImage() async throws {
+        let uuid = try await run(workflowType: "pipeline")
+        let tryonData = try await fetchImage(uuid: uuid)
+        
+        updateImage(uuid, for: .tryon, data: tryonData)
+    }
+    
+    func runDefaultAndUpdateImage() async throws {
+        let uuid = try await run(workflowType: "default")
+        let tryonData = try await fetchImage(uuid: uuid)
+        
+        updateImage(uuid, for: .tryon, data: tryonData)
+    }
+    
     func run(workflowType: String) async throws -> String {
         let workflowToRun: Workflow?
         switch workflowType {
@@ -512,7 +534,7 @@ class ViewModel: ObservableObject {
         
         updateImage(uuid, for: .pose, data: poseData)
         
-        let nodeMetaTitle = "DensePose Estimator"
+        let nodeMetaTitle = "Load Pose Image"
         updateImageUUIDForAllWorkflows(nodeMetaTitle: nodeMetaTitle, uuid: uuid)
     }
     

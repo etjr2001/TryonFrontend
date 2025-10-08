@@ -67,7 +67,7 @@ struct GenerateMaskView: View {
                     )
                     InfoButton(
                         infoTitle: "Segment Anything Model (SAM)",
-                        infoText: "Choose SAM model to generate mask"
+                        infoText: "Choose the pre-trained SAM model to generate the segmentation mask. Larger models offer higher accuracy but require more memory. Smaller models are more lightweight and faster. \nDefault model is sam_hq_vit_h."
                     )
                 }
                 .padding(.vertical, 0.5)
@@ -93,29 +93,7 @@ struct GenerateMaskView: View {
                     )
                     InfoButton(
                         infoTitle: "Grounding DINO Model",
-                        infoText: "Choose grounding model to generate mask"
-                    )
-                }
-                .padding(.vertical, 0.5)
-                
-                HStack {
-                    Text("Prompt")
-                        .foregroundColor(.secondary)
-                        .frame(width: 80)
-                    TextField("Enter prompt for segment anything", text: $viewModel.SAMPrompt)
-                        .frame(width: 255)
-                        .padding(4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 9)
-                                .stroke(Color.accentColor, lineWidth: 0.5)
-                        )
-                        .onChange(of: viewModel.SAMPrompt) {
-                            viewModel.updateSAMPrompt(to: viewModel.SAMPrompt)
-                        }
-                    
-                    InfoButton(
-                        infoTitle: "Segment Anything Prompt",
-                        infoText: "Describe what the person in the image is wearing e.g. shirt"
+                        infoText: "Choose the grounding model to generate the segmentation mask. \nDefault model is GroundingDINO_SwinB."
                     )
                 }
                 .padding(.vertical, 0.5)
@@ -148,21 +126,31 @@ struct GenerateMaskView: View {
                         }
                     InfoButton(
                         infoTitle: "Segment Anything Threshold",
-                        infoText: "Set threshold from 0 (cannot be 0) to 1.0 (highest) for segment anything model output.\nLower values will result in more detailed masks but more noise.\nHigher values will result in less detailed masks but less noise."
+                        infoText: "Set threshold from 0 (cannot be 0) to 1.0 (highest) for segment anything model output.\nLower values will result in more detailed masks but more noise.\nHigher values will result in less detailed masks but less noise.\nDefault value is 0.3."
                     )
                 }
                 .padding(.vertical, 0.5)
                 
-                Button("Generate mask") {
-                    showMaskImage = true
-                    showLoading = true
-                    showErrorMessage = false
-                    Task {
-                        await generateMaskAndDisplayImage()
+                HStack {
+                    Button("Generate mask") {
+                        showMaskImage = true
+                        showLoading = true
+                        showErrorMessage = false
+                        Task {
+                            await generateMaskAndDisplayImage()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.vertical, 0.5)
+                    
+                    Button {
+                        viewModel.resetMaskParameters()
+                        thresholdText = String(viewModel.SAMThreshold)
+                        showErrorMessage = false
+                    } label: {
+                        Label("Reset", systemImage: "arrow.counterclockwise")
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(.vertical, 0.5)
                 
                 if (showErrorMessage) {
                     HStack {

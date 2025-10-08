@@ -63,7 +63,7 @@ struct GeneratePoseView: View {
                     )
                     InfoButton(
                         infoTitle: "DensePose Model",
-                        infoText: "Choose DensePose model to generate pose estimation"
+                        infoText: "Choose the pre-trained DensePose model to be used for dense pose estimation.\nDefault is densepose_r50_fpn_dl.torchscript."
                     )
                 }
                 .padding(.vertical, 0.5)
@@ -89,7 +89,7 @@ struct GeneratePoseView: View {
                     )
                     InfoButton(
                         infoTitle: "Colour Map (cmap)",
-                        infoText: "Choose colour mapping to generate pose estimation"
+                        infoText: "Choose the colour mapping used for visualising the dense pose estimation.\nDefault is Viridis."
                     )
                 }
                 .padding(.vertical, 0.5)
@@ -122,23 +122,32 @@ struct GeneratePoseView: View {
                         }
                     InfoButton(
                         infoTitle: "Pose Resolution",
-                        infoText: "Resolution must be multiple of 64. Min 64 to max 16384. Default 768.\nHigher resolution will result in better performance but more memory usage."
+                        infoText: "Resolution must be multiple of 64. Min 64 to max 2048. Higher resolution will result in better performance but more memory usage.\nDefault 768."
                     )
                 }
                 .padding(.vertical, 0.5)
                 
-                Button("Generate pose") {
-                    showErrorMessage = false
-                    showDensePoseImage = true
-                    showLoading = true
-                    Task {
-                        await generatePoseAndDisplayImage()
+                HStack {
+                    Button("Generate pose") {
+                        showErrorMessage = false
+                        showDensePoseImage = true
+                        showLoading = true
+                        Task {
+                            await generatePoseAndDisplayImage()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.vertical, 0.5)
+                    
+                    
+                    Button {
+                        viewModel.resetPoseParameters()
+                        densePoseResolutionText = String(viewModel.densePoseResolution)
+                        showErrorMessage = false
+                    } label: {
+                        Label("Reset", systemImage: "arrow.counterclockwise")
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(.vertical, 0.5)
-                
-                
                 if (showErrorMessage) {
                     HStack {
                         Text(errorMessage)
@@ -175,10 +184,10 @@ struct GeneratePoseView: View {
             return 64
         }
         
-        if (number > 16384) {
-            errorMessage = "Resolution is at most 16384.\nResolution set automatically to 16384."
+        if (number > 2048) {
+            errorMessage = "Resolution is at most 2048.\nResolution set automatically to 2048."
             showErrorMessage = true
-            return 16384
+            return 2048
         }
         
         let rounded = Int(round(Double(number) / 64.0)) * 64

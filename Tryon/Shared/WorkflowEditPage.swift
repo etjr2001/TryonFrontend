@@ -9,6 +9,8 @@ import SwiftUI
 
 enum WorkflowEditPage {
     case uploadImage(imageType: ImageType)
+    case uploadHumanImage
+    case uploadGarmentImage
     case displayImage(imageType: ImageType)
     case generateMask
     case generatePose
@@ -19,6 +21,12 @@ enum WorkflowEditPage {
         switch self {
         case .uploadImage(imageType: let imageType):
             UploadImageView(imageType: imageType)
+                .environmentObject(viewModel)
+        case .uploadHumanImage:
+            UploadHumanImageView()
+                .environmentObject(viewModel)
+        case .uploadGarmentImage:
+            UploadGarmentImageView()
                 .environmentObject(viewModel)
         case .displayImage(imageType: let imageType):
             DisplayImageView(imageType: imageType)

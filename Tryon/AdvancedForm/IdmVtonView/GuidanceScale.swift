@@ -10,6 +10,8 @@ import SwiftUI
 struct GuidanceScale: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var refreshTrigger: Bool
+    
     @FocusState private var isGuidanceScaleFocused: Bool
     
     @State private var guidanceScaleErrorMessage: String = ""
@@ -46,6 +48,10 @@ struct GuidanceScale: View {
                         guidanceScaleText = String(guidanceScale)
                         viewModel.updateGuidanceScale(to: guidanceScale)
                     }
+                }
+                .onChange(of: refreshTrigger) {
+                    showGuidanceScaleErrorMessage = false
+                    guidanceScaleText = String(viewModel.guidance_scale)
                 }
             InfoButton(infoTitle: "IDM-VTON Guidance Scale", infoText: "Tryon image guidance scale. Higher values give more weight to the prompt. A value of 0 gives random images. Default 2.0. To 1 decimal place.")
         }

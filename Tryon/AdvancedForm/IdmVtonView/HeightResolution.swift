@@ -10,6 +10,8 @@ import SwiftUI
 struct HeightResolution: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var refreshTrigger: Bool
+    
     @FocusState private var isHeightFocused: Bool
     
     @State private var heightErrorMessage: String = ""
@@ -46,6 +48,10 @@ struct HeightResolution: View {
                         heightResolutionText = String(heightResolution)
                         viewModel.updateHeightResolution(to: heightResolution)
                     }
+                }
+                .onChange(of: refreshTrigger) {
+                    showHeightErrorMessage = false
+                    heightResolutionText = String(viewModel.heightResolution)
                 }
             InfoButton(infoTitle: "IDM-VTON Image Height", infoText: "Tryon image height. Default 1024, maximum 2048. Multiple of 64.")
         }

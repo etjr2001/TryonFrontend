@@ -10,6 +10,8 @@ import SwiftUI
 struct Seed: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var refreshTrigger: Bool
+    
     @FocusState private var isFocused: Bool
     
     @State private var seedErrorMessage: String = ""
@@ -47,6 +49,9 @@ struct Seed: View {
                         viewModel.updateSeed(to: seed)
                     }
                 }
+                .onChange(of: refreshTrigger) {
+                    seedText = String(viewModel.seed)
+                }
             InfoButton(infoTitle: "IDM-VTON Seed", infoText: "Tryon seed for random number generation to ensure reeproducibility. Default 42. Any integer less than Int.max.")
         }
         .onAppear {
@@ -74,12 +79,6 @@ struct Seed: View {
             seedErrorMessage = "Seed must be a positive integer.\nSeed set to 0."
             showSeedErrorMessage = true
             return 0
-        }
-        
-        if (number > Int.max) {
-            seedErrorMessage = "Seed exceeds Int.max.\nSeed set to Int.max."
-            showSeedErrorMessage = true
-            return Int.max
         }
         
         showSeedErrorMessage = false

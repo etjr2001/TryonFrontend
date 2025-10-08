@@ -13,11 +13,15 @@ struct WeightDType: View {
     var labelWidth: CGFloat
     var fieldWidth: CGFloat
     
-    let weightDType: [String] = [
-        "float16",
-        "float32",
-        "bfloat16"
+    let rawWeightDType: [ModelOption] = [
+        ModelOption(label: "float16", value: "float16", sizeMB: 0),
+        ModelOption(label: "float32", value: "float32", sizeMB: 1),
+        ModelOption(label: "bfloat16", value: "bfloat16", sizeMB: 2)
     ]
+    
+    var sortedWeightDType: [ModelOption] {
+        sortAndLabel(rawWeightDType, smallestSizeLabel: "", largestSizeLabel: "", defaultModel: "float16")
+    }
     
     var body: some View {
         HStack {
@@ -25,7 +29,7 @@ struct WeightDType: View {
                 .foregroundColor(.secondary)
                 .frame(width: labelWidth)
             Picker("Weight Dtype", selection: $viewModel.weightDType) {
-                ForEach(weightDType, id: \.self) { dtype in Text(dtype).tag(dtype)
+                ForEach(sortedWeightDType) { model in Text(model.label).tag(model.value)
                 }
             }
             .pickerStyle(.menu)

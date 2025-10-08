@@ -20,8 +20,13 @@ struct DisplayImageView: View {
                     .border(Color.accentColor, width: 2)
             }
         } else {
-            Text("Error loading image")
-                .font(.caption)
+            VStack {
+                Spacer()
+                Text("Error loading image")
+                    .font(.headline)
+                Text("Have you run the workflow previously?")
+                Spacer()
+            }
         }
     }
 }

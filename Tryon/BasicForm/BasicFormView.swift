@@ -10,19 +10,20 @@ import SwiftUI
 struct BasicFormView: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var sheetCancelled: Bool
+    
     private let pages: [WorkflowEditPage] = [
-        .uploadImage(imageType: .human),
-        .uploadImage(imageType: .garment),
+        .uploadHumanImage,
+        .uploadGarmentImage
     ]
     
     var body: some View {
-        WorkflowNavigationView(pages: pages) {
-            await runDefaultWorkflow()
-        }
-        .environmentObject(viewModel)
-    }
-    
-    private func runDefaultWorkflow() async {
-        
+        WorkflowNavigationView(pages: pages,
+                               runWorkflow: {
+            try await viewModel.runDefaultAndUpdateImage()
+        },
+                               sheetCancelled: $sheetCancelled
+        )
+            .environmentObject(viewModel)
     }
 }

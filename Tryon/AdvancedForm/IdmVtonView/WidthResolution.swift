@@ -10,6 +10,8 @@ import SwiftUI
 struct WidthResolution: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var refreshTrigger: Bool
+    
     @FocusState private var isWidthFocused: Bool
     
     @State private var widthErrorMessage: String = ""
@@ -47,6 +49,10 @@ struct WidthResolution: View {
                         viewModel.updateWidthResolution(to: widthResolution)
                     }
                 }
+                .onChange(of: refreshTrigger) {
+                    widthResolutionText = String(viewModel.widthResolution)
+                }
+            
             InfoButton(infoTitle: "IDM-VTON Image Width", infoText: "Tryon image width. Default 768, maximum 2048. Multiple of 64.")
         }
         .padding(.vertical, 0.5)

@@ -10,6 +10,8 @@ import SwiftUI
 struct Strength: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var refreshTrigger: Bool
+    
     @FocusState private var isFocused: Bool
     
     @State private var strengthErrorMessage: String = ""
@@ -47,7 +49,10 @@ struct Strength: View {
                         viewModel.updateStrength(to: strength)
                     }
                 }
-            InfoButton(infoTitle: "IDM-VTON Strength", infoText: "Tryon image strength. Determines how strongly the garment appearance is applied. Default 1.0. Maximum 2048. To 1 decimal place.")
+                .onChange(of: refreshTrigger) {
+                    strengthText = String(viewModel.strength)
+                }
+            InfoButton(infoTitle: "IDM-VTON Strength", infoText: "Tryon image strength. Determines how strongly the garment appearance is applied. Default 1.0. The value of strength should be between 0 to 1.0. To 1 decimal place.")
         }
         .padding(.vertical, 0.5)
         .onAppear {
@@ -77,10 +82,10 @@ struct Strength: View {
             return 0
         }
         
-        if (number > 2048) {
-            strengthErrorMessage = "Strength is at most 2048.\nStrength set automatically to 2048."
+        if (number > 1) {
+            strengthErrorMessage = "Strength is at most 1.0.\nStrength set automatically to 1.0."
             showStrengthErrorMessage = true
-            return 2048
+            return 1
         }
         
         let rounded = round(number * 10) / 10

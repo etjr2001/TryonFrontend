@@ -10,9 +10,12 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @State private var sheetCancelled: Bool = false
+    
     enum ActiveSheet: Identifiable {
         case basicForm
         case advancedForm
+        case resultView
         
         var id: Int {
             hashValue
@@ -24,36 +27,66 @@ struct ContentView: View {
     var body: some View {
         VStack {
             Button("Generate basic try-on") {
+                sheetCancelled = false
                 activeSheet = .basicForm
             }
             .buttonStyle(.borderedProminent)
             .padding()
             Button("Generate with advanced options") {
+                sheetCancelled = false
                 activeSheet = .advancedForm
             }
             .buttonStyle(.borderedProminent)
+            .padding()
+            Button("View Last Result") {
+                sheetCancelled = false
+                activeSheet = .resultView
+            }
+            .buttonStyle(.bordered)
             .padding()
         }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .basicForm:
-                BasicFormView()
+                BasicFormView(sheetCancelled: $sheetCancelled)
                     .environmentObject(viewModel)
             case .advancedForm:
-                AdvancedFormView()
+                AdvancedFormView(sheetCancelled: $sheetCancelled)
                     .environmentObject(viewModel)
+            case .resultView:
+                ResultView()
+                    .environmentObject(viewModel)
+            }
+        }
+        .onChange(of: activeSheet) { oldValue, newValue in
+            if newValue == nil, let lastSheet = oldValue {
+                Task {
+                    switch (lastSheet) {
+                    case .basicForm:
+                        if (!sheetCancelled) {
+                            activeSheet = .resultView
+                        }
+                    case .advancedForm:
+                        if (!sheetCancelled) {
+                            activeSheet = .resultView
+                        }
+                    case .resultView:
+                        activeSheet = nil
+                    }
+                }
             }
         }
         .task {
             await viewModel.fetchWorkflows()
             await viewModel.fetchSampleImages()
         }
+        
     }
 }
 
-#Preview {
-    let mockVM = ViewModel()
-    
-    ContentView()
-        .environmentObject(mockVM)
-}
+//#Preview {
+//    let mockVM = ViewModel()
+//
+//    ContentView()
+//        .environmentObject(mockVM)
+//}

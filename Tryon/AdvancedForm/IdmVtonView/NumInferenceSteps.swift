@@ -10,6 +10,8 @@ import SwiftUI
 struct NumInferenceSteps: View {
     @EnvironmentObject var viewModel: ViewModel
     
+    @Binding var refreshTrigger: Bool
+    
     @FocusState private var isFocused: Bool
     
     @State private var numInferenceStepsErrorMessage: String = ""
@@ -46,6 +48,9 @@ struct NumInferenceSteps: View {
                         numInferenceStepsText = String(numInferenceSteps)
                         viewModel.updateNumInferenceSteps(to: numInferenceSteps)
                     }
+                }
+                .onChange(of: refreshTrigger) {
+                    numInferenceStepsText = String(viewModel.numInferenceSteps)
                 }
             InfoButton(infoTitle: "IDM-VTON Num Inference Steps", infoText: "Tryon number of inference steps. The higher the number, the longer it will take to generate the output. Default 30, maximum 1000.")
         }
