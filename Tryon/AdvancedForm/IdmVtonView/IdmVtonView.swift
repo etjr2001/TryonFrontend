@@ -11,7 +11,6 @@ struct IdmVtonView: View {
     @EnvironmentObject var viewModel: ViewModel
     
     @State private var showLoading: Bool = false
-    @State private var showTryOnImage: Bool = false
     
     var labelWidth: CGFloat = 120
     var fieldWidth: CGFloat = 215
@@ -55,12 +54,7 @@ struct IdmVtonView: View {
                 if showLoading {
                     Spacer()
                     ProgressView("Loading \(ImageType.mask.type) Image...")
-                } else if showTryOnImage {
-                    DisplayImageView(imageType: .tryon)
                 }
-            }
-            .onAppear {
-                showTryOnImage = viewModel.tryonImageData != nil
             }
         }
     }
