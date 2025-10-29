@@ -43,7 +43,17 @@ struct ResultView: View {
                     dismiss()
                 }
             }
-            if (viewModel.tryonImageData != nil) {
+            if (viewModel.beforeImageData == nil && viewModel.afterImageData == nil) {
+                VStack {
+                    Spacer()
+                    Text("Error loading image")
+                        .font(.headline)
+                    Text("Have you run the workflow yet?")
+                        .font(.caption)
+                    Spacer()
+                }
+            }
+            else {
                 Button("Save Image") {
                     saveImage()
                 }
@@ -54,15 +64,15 @@ struct ResultView: View {
                 .alert("Failed to save image.", isPresented: $showSaveErrorAlert) {
                     Button("OK", role: .cancel) {}
                 }
+                SliderView()
             }
-            DisplayImageView(imageType: .tryon)
             Spacer()
         }
         .padding()
     }
     
     func saveImage() {
-        guard let data = viewModel.tryonImageData,
+        guard let data = viewModel.afterImageData,
               let image = UIImage(data: data) else {
             showSaveSuccessAlert = true
             return

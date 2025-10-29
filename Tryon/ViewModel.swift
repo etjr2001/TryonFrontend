@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Zip
 
 @MainActor
 class ViewModel: ObservableObject {
@@ -18,9 +19,9 @@ class ViewModel: ObservableObject {
     @Published var garmentImageData: Data?
     @Published var maskImageData: Data?
     @Published var poseImageData: Data?
-    @Published var tryonImageData: Data?
     
-    @Published var tryonImageUUID: String?
+    @Published var beforeImageData: Data?
+    @Published var afterImageData: Data?
     
     @Published var selectedSAMModel: String = "sam_hq_vit_h (2.57GB)"
     @Published var selectedDINOModel: String = "GroundingDINO_SwinB (938MB)"
@@ -143,7 +144,11 @@ class ViewModel: ObservableObject {
         
         do {
             let humanData = try await fetchImage(uuid: "sample_human")
-            humanImageData = humanData
+            
+            let (imageFileNames, unzipDir) = try unzipData(humanData)
+            
+            updateImage(imageFileName: imageFileNames.first!, unzipDir: unzipDir, imageType: .human)
+            clearTempDir(unzipDir: unzipDir)
         } catch {
             self.errorMessage = "Failed to fetch human image sample: \(error.localizedDescription)"
         }
@@ -154,7 +159,11 @@ class ViewModel: ObservableObject {
         
         do {
             let garmentData = try await fetchImage(uuid: "sample_garment")
-            garmentImageData = garmentData
+            
+            let (imageFileNames, unzipDir) = try unzipData(garmentData)
+            
+            updateImage(imageFileName: imageFileNames.first!, unzipDir: unzipDir, imageType: .garment)
+            clearTempDir(unzipDir: unzipDir)
         } catch {
             self.errorMessage = "Failed to fetch garment image sample: \(error.localizedDescription)"
         }
@@ -188,28 +197,25 @@ class ViewModel: ObservableObject {
         case .garment: return garmentImageData
         case .mask: return maskImageData
         case .pose: return poseImageData
-        case .tryon: return tryonImageData
+        case .before: return beforeImageData
+        case .after: return afterImageData
         }
     }
     
     func uploadImageDataAndUpdateImage(data: Data, imageType: ImageType) async throws {
         do {
             let uuid = try await uploadImage(data: data)
-            updateImage(uuid, for: imageType, data: data)
+            updateImage(for: imageType, data: data)
             
-            // Try-on image is the output, hence not loaded in the workflow
-            if imageType == .tryon {
-                tryonImageUUID = uuid
-            } else {
-                let nodeMetaTitle = "Load \(imageType.type.capitalized) Image"
-                updateImageUUIDForAllWorkflows(nodeMetaTitle: nodeMetaTitle, uuid: uuid)
-            }
+            let nodeMetaTitle = "Load \(imageType.type.capitalized) Image"
+            updateImageUUIDForAllWorkflows(nodeMetaTitle: nodeMetaTitle, uuid: uuid)
+            
         } catch {
             errorMessage = "Upload image failed: \(error.localizedDescription)"
         }
     }
     
-    func updateImage(_ uuid: String, for type: ImageType, data: Data) {
+    func updateImage(for type: ImageType, data: Data) {
         switch type {
         case .human:
             humanImageData = data
@@ -219,8 +225,10 @@ class ViewModel: ObservableObject {
             maskImageData = data
         case .pose:
             poseImageData = data
-        case .tryon:
-            tryonImageData = data
+        case .before:
+            beforeImageData = data
+        case .after:
+            afterImageData = data
         }
     }
     
@@ -403,7 +411,10 @@ class ViewModel: ObservableObject {
         let uuid = try await run(workflowType: "mask")
         let maskData = try await fetchImage(uuid: uuid)
         
-        updateImage(uuid, for: .mask, data: maskData)
+        let (imageFileNames, unzipDir) = try unzipData(maskData)
+        
+        updateImage(imageFileName: imageFileNames.first!, unzipDir: unzipDir, imageType: .mask)
+        clearTempDir(unzipDir: unzipDir)
         
         let nodeMetaTitle = "Load Mask Image"
         updateImageUUIDForAllWorkflows(nodeMetaTitle: nodeMetaTitle, uuid: uuid)
@@ -413,14 +424,67 @@ class ViewModel: ObservableObject {
         let uuid = try await run(workflowType: "pipeline")
         let tryonData = try await fetchImage(uuid: uuid)
         
-        updateImage(uuid, for: .tryon, data: tryonData)
+        let (imageFileNames, unzipDir) = try unzipData(tryonData)
+        
+        updateResultImages(imageFileNames: imageFileNames, unzipDir: unzipDir)
+        
     }
     
     func runDefaultAndUpdateImage() async throws {
         let uuid = try await run(workflowType: "default")
         let tryonData = try await fetchImage(uuid: uuid)
         
-        updateImage(uuid, for: .tryon, data: tryonData)
+        
+        let (imageFileNames, unzipDir) = try unzipData(tryonData)
+        
+        updateResultImages(imageFileNames: imageFileNames, unzipDir: unzipDir)
+        
+    }
+    
+    func unzipData(_ data: Data) throws -> ([String], URL) {
+        let tempDir = FileManager.default.temporaryDirectory
+        let zipFileURL = tempDir.appendingPathComponent("images.zip")
+        try data.write(to: zipFileURL)
+        
+        let unzipDir = tempDir.appendingPathComponent("unzipped_images")
+        try FileManager.default.createDirectory(at: unzipDir, withIntermediateDirectories: true)
+        try Zip.unzipFile(zipFileURL, destination: unzipDir, overwrite: true, password: nil)
+        
+        let fileNames = try FileManager.default.contentsOfDirectory(atPath: unzipDir.path())
+        
+        let imageExtensions = ["png", "jpg", "jpeg", "gif"]
+        let imageFileNames = fileNames.filter { filename in
+            let nsString = filename as NSString
+            let fileExtension = nsString.pathExtension.lowercased()
+            return imageExtensions.contains(fileExtension)
+        }
+        
+        return (imageFileNames, unzipDir)
+    }
+    
+    func updateImage(imageFileName: String, unzipDir: URL, imageType: ImageType) {
+        let imageURL = unzipDir.appendingPathComponent(imageFileName)
+        if let imageData = try? Data(contentsOf: imageURL) {
+            updateImage(for: imageType, data: imageData)
+        }
+    }
+    
+    func updateResultImages(imageFileNames: [String], unzipDir: URL) {
+        let sortedFileNames = imageFileNames.sorted()
+        let afterFileName = sortedFileNames.first!
+        let beforeFileName = sortedFileNames.last!
+        
+        updateImage(imageFileName: beforeFileName, unzipDir: unzipDir, imageType: .before)
+        updateImage(imageFileName: afterFileName, unzipDir: unzipDir, imageType: .after)
+        clearTempDir(unzipDir: unzipDir)
+    }
+    
+    func clearTempDir(unzipDir: URL) {
+        do {
+            try FileManager.default.removeItem(at: unzipDir)
+        } catch {
+            print("Temp directory not removed")
+        }
     }
     
     func run(workflowType: String) async throws -> String {
@@ -532,7 +596,10 @@ class ViewModel: ObservableObject {
         let uuid = try await run(workflowType: "pose")
         let poseData = try await fetchImage(uuid: uuid)
         
-        updateImage(uuid, for: .pose, data: poseData)
+        let (imageFileNames, unzipDir) = try unzipData(poseData)
+        
+        updateImage(imageFileName: imageFileNames.first!, unzipDir: unzipDir, imageType: .pose)
+        clearTempDir(unzipDir: unzipDir)
         
         let nodeMetaTitle = "Load Pose Image"
         updateImageUUIDForAllWorkflows(nodeMetaTitle: nodeMetaTitle, uuid: uuid)

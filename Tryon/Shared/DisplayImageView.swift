@@ -24,7 +24,6 @@ struct DisplayImageView: View {
                 Spacer()
                 Text("Error loading image")
                     .font(.headline)
-                Text("Have you run the workflow previously?")
                 Spacer()
             }
         }

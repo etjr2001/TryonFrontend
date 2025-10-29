@@ -10,7 +10,8 @@ enum ImageType: String, CaseIterable {
     case garment
     case mask
     case pose
-    case tryon
+    case before
+    case after
     
     var type: String {
         switch self {
@@ -18,7 +19,8 @@ enum ImageType: String, CaseIterable {
         case .garment: return "Garment"
         case .mask: return "Mask"
         case .pose: return "Pose"
-        case .tryon: return "Try-On"
+        case .before: return "Before"
+        case .after: return "After"
         }
     }
 }

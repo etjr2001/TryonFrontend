@@ -1,0 +1,24 @@
+{
+  "originHash" : "6b32097d5d8c2899eed04218a58f3df3a77ea0d49b7700714a9d5fdae07a0f93",
+  "pins" : [
+    {
+      "identity" : "moslider",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mkhasson97/MoSlider",
+      "state" : {
+        "branch" : "main",
+        "revision" : "aad3f8875cf4de5c2c1308cd1b1bd51b7486e9b5"
+      }
+    },
+    {
+      "identity" : "zip",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/marmelroy/Zip.git",
+      "state" : {
+        "revision" : "67fa55813b9e7b3b9acee9c0ae501def28746d76",
+        "version" : "2.1.2"
+      }
+    }
+  ],
+  "version" : 3
+}
